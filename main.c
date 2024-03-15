@@ -43,7 +43,7 @@ void term_setup(void) {
     tcgetattr(STDIN_FILENO, &term_old);
 
     new = term_old;
-    new.c_lflag &= ~(ICANON); /* make input available without typing <ENTER> */
+    new.c_lflag &= ~(ICANON); /* make input available without typing <CR> */
     new.c_lflag &= ~(ECHO);   /* disable input echo */
 
     tcsetattr(STDIN_FILENO, TCSANOW, &new);
@@ -96,7 +96,7 @@ void display_state(struct tower *towers) {
 
     for (d = n_discs - 1; d >= 0; d--) {
         for (t = 0; t < N_TOWERS; t++) {
-            /* print appropriate number of spaces if no disc */
+            /* TODO: print appropriate number of spaces if no disc */
             if (
                 towers[t].selected &&
                 d == towers[t].n_discs - 1)
@@ -144,8 +144,7 @@ int main(void) {
 
         while (!valid && (c = getchar()) != '\n' && c != EOF) {}
     } while (n_discs < 3 || n_discs > MAX_DISCS);
-
-    /* erase lines when input valid */
+    /* TODO: erase lines when input valid */
 
     memset(towers, 0, N_TOWERS * sizeof *towers);
 
@@ -159,7 +158,7 @@ int main(void) {
     fprintf(stdout, CSI "%dA", n_discs + 1);
     save_cursor_pos();
 
-    /* implement replay whether by adding a disc or by asking */
+    /* TODO: implement replay whether by adding a disc or by asking */
     finished = false;
     quit = false;
 
@@ -169,7 +168,6 @@ int main(void) {
 
         do {
             c = getchar();
-            quit = (c == '\x1b') || (c == 'q') || (c == 'Q');
 
             switch (c) {
             case 'a':
@@ -184,6 +182,10 @@ int main(void) {
             case 'E':
                 from = 2;
                 break;
+            case 'q':
+            case 'Q':
+            case '\x1b':
+                quit = true;
             }
         } while (
             !quit &&
@@ -199,7 +201,6 @@ int main(void) {
 
             do {
                 c = getchar();
-                quit = (c == '\x1b') || (c == 'q') || (c == 'Q');
 
                 switch (c) {
                 case 'a':
@@ -214,6 +215,10 @@ int main(void) {
                 case 'E':
                     to = 2;
                     break;
+                case 'q':
+                case 'Q':
+                case '\x1b':
+                    quit = true;
                 }
             } while (
                 !quit &&
