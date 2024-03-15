@@ -33,6 +33,7 @@ char *disc_str[11] = {
 
 struct termios term_old;
 short n_discs;
+int disc_str_max_len;
 
 void save_cursor_pos(void) {
     fputs(CSI "s", stdout);
@@ -101,22 +102,21 @@ void display_state(struct tower *towers) {
 
     for (d = n_discs - 1; d >= 0; d--) {
         for (t = 0; t < N_TOWERS; t++) {
-            /* TODO: print appropriate number of spaces if no disc */
             if (
                 towers[t].selected &&
                 d == towers[t].n_discs - 1
             ) {
                 printf(
                     CSI "7m" "%*.*s" CSI "0m" " ",
-                    (1 + 2 * (n_discs - 1)),
-                    (1 + 2 * (n_discs - 1)),
+                    disc_str_max_len,
+                    disc_str_max_len,
                     (MAX_DISCS - n_discs) + disc_str[towers[t].discs[d]]
                 );
             } else {
                 printf(
                     "%*.*s ",
-                    (1 + 2 * (n_discs - 1)),
-                    (1 + 2 * (n_discs - 1)),
+                    disc_str_max_len,
+                    disc_str_max_len,
                     (MAX_DISCS - n_discs) + disc_str[towers[t].discs[d]]
                 );
             }
@@ -151,6 +151,8 @@ int main(void) {
             while (((c = getchar()) != '\n') && (c != EOF)) {}
         }
     } while (n_discs < 3 || n_discs > MAX_DISCS);
+
+    disc_str_max_len = 1 + 2 * (n_discs - 1);
 
     /* TODO: erase lines when input valid */
 
