@@ -175,31 +175,36 @@ int main(void) {
         display_state(towers);
 
         do {
-            c = getchar();
+            do {
+                c = getchar();
 
-            switch (c) {
-            case 'a':
-            case 'A':
-                from = 0;
-                break;
-            case 'z':
-            case 'Z':
-                from = 1;
-                break;
-            case 'e':
-            case 'E':
-                from = 2;
-                break;
-            case 'q':
-            case 'Q':
-            case '\x1b':
-                quit = true;
-            }
-        } while (
-            !quit &&
-            (from < 0 || from > N_TOWERS) &&
-            towers[from].n_discs == 0
-        );
+                switch (c) {
+                    case 'a':
+                    case 'A':
+                        from = 0;
+                        break;
+                    case 'z':
+                    case 'Z':
+                        from = 1;
+                        break;
+                    case 'e':
+                    case 'E':
+                        from = 2;
+                        break;
+                    case 'q':
+                    case 'Q':
+                    case '\x1b':
+                        quit = true;
+                        break;
+                    default:
+                        from = -1;
+                }
+            } while (
+                !quit &&
+                (from < 0 || from > N_TOWERS)
+            );
+        } while (towers[from].n_discs == 0 && !quit);
+        /* TODO: fix this logic mess */
 
         if (!quit) {
             towers[from].selected = true;
@@ -208,31 +213,36 @@ int main(void) {
             display_state(towers);
 
             do {
-                c = getchar();
+                do {
+                    c = getchar();
 
-                switch (c) {
-                case 'a':
-                case 'A':
-                    to = 0;
-                    break;
-                case 'z':
-                case 'Z':
-                    to = 1;
-                    break;
-                case 'e':
-                case 'E':
-                    to = 2;
-                    break;
-                case 'q':
-                case 'Q':
-                case '\x1b':
-                    quit = true;
-                }
-            } while (
-                !quit &&
-                (to < 0 || to > N_TOWERS) &&
-                to == from
-            );
+                    switch (c) {
+                        case 'a':
+                        case 'A':
+                            to = 0;
+                            break;
+                        case 'z':
+                        case 'Z':
+                            to = 1;
+                            break;
+                        case 'e':
+                        case 'E':
+                            to = 2;
+                            break;
+                        case 'q':
+                        case 'Q':
+                        case '\x1b':
+                            quit = true;
+                            break;
+                        default:
+                            to = -1;
+                    }
+                } while (
+                    !quit &&
+                    (to < 0 || to > N_TOWERS)
+                );
+            } while (to == from && !quit);
+            /* TODO: fix this logic mess */
 
             if (!quit) {
                 move_disc(&towers[from], &towers[to]);
