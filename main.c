@@ -142,8 +142,11 @@ int main(void) {
 
         n_discs = (short)valid * atoi(tmp);
 
-        while (!valid && (c = getchar()) != '\n' && c != EOF) {}
+        if (tmp_len > (short)(sizeof tmp - 2)) {
+            while ((c = getchar()) != '\n' && c != EOF) {}
+        }
     } while (n_discs < 3 || n_discs > MAX_DISCS);
+
     /* TODO: erase lines when input valid */
 
     memset(towers, 0, N_TOWERS * sizeof *towers);
