@@ -1,9 +1,11 @@
+#define _POSIX_C_SOURCE 199309L
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termio.h>
+#include <time.h>
 #include <unistd.h>
 
 #define N_TOWERS 3
@@ -57,6 +59,15 @@ void term_setup(void) {
 
 void term_reset(void) {
     tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+}
+
+void delay(long ms) {
+  struct timespec ts;
+
+  ts.tv_sec = ms / 1000;
+  ts.tv_nsec = (ms % 1000) * 1000000;
+
+  nanosleep(&ts, &ts);
 }
 
 bool tower_push_disc(struct tower *tower, short disc) {
@@ -126,11 +137,36 @@ void display_state(struct tower *towers) {
     }
 }
 
-int main(void) {
+void hanoi(int n, int t1, int t2, int t3, struct tower *towers) {
+    if (n > 0) {
+        hanoi(n - 1, t1, t3, t2, towers);
+
+        restore_cursor_pos();
+        display_state(towers);
+        delay(50);
+
+        towers[t1].selected = true;
+
+        restore_cursor_pos();
+        display_state(towers);
+
+        move_disc(&towers[t1], &towers[t3]);
+        towers[t1].selected = false;
+        delay(50);
+
+        hanoi(n - 1, t2, t1, t3, towers);
+    }
+}
+
+int main(int argc, char *argv[]) {
     struct tower towers[N_TOWERS];
     short i, from, to, tmp_len;
-    bool finished, quit, valid;
+    bool finished, quit, valid, auto_run;
     char c, tmp[8];
+
+    if (argc > 1) {
+        auto_run = (strcmp(argv[1], "--auto") == 0);
+    }
 
     do {
         fputs("Nombre de disques : ", stdout);
@@ -151,10 +187,9 @@ int main(void) {
             while (((c = getchar()) != '\n') && (c != EOF)) {}
         }
     } while (n_discs < 3 || n_discs > MAX_DISCS);
+    /* TODO: erase lines when input valid */
 
     disc_str_max_len = 1 + 2 * (n_discs - 1);
-
-    /* TODO: erase lines when input valid */
 
     memset(towers, 0, N_TOWERS * sizeof *towers);
 
@@ -172,15 +207,20 @@ int main(void) {
     finished = false;
     quit = false;
 
-    while (!finished && !quit) {
+    if (auto_run) {
+        hanoi(n_discs, 0, 1, 2, towers);
         restore_cursor_pos();
         display_state(towers);
+    } else {
+        while (!finished && !quit) {
+            restore_cursor_pos();
+            display_state(towers);
 
-        do {
             do {
-                c = getchar();
+                do {
+                    c = getchar();
 
-                switch (c) {
+                    switch (c) {
                     case 'a':
                     case 'A':
                         from = 0;
@@ -200,25 +240,25 @@ int main(void) {
                         break;
                     default:
                         from = -1;
-                }
-            } while (
-                !quit &&
-                (from < 0 || from > N_TOWERS)
-            );
-        } while (towers[from].n_discs == 0 && !quit);
-        /* TODO: fix this logic mess */
+                    }
+                } while (
+                    !quit &&
+                    (from < 0 || from > N_TOWERS)
+                );
+            } while (towers[from].n_discs == 0 && !quit);
+            /* TODO: fix this logic mess */
 
-        if (!quit) {
-            towers[from].selected = true;
+            if (!quit) {
+                towers[from].selected = true;
 
-            restore_cursor_pos();
-            display_state(towers);
+                restore_cursor_pos();
+                display_state(towers);
 
-            do {
                 do {
-                    c = getchar();
+                    do {
+                        c = getchar();
 
-                    switch (c) {
+                        switch (c) {
                         case 'a':
                         case 'A':
                             to = 0;
@@ -238,27 +278,28 @@ int main(void) {
                             break;
                         default:
                             to = -1;
-                    }
-                } while (
-                    !quit &&
-                    (to < 0 || to > N_TOWERS)
-                );
-            } while (to == from && !quit);
-            /* TODO: fix this logic mess */
+                        }
+                    } while (
+                        !quit &&
+                        (to < 0 || to > N_TOWERS)
+                    );
+                } while (to == from && !quit);
+                /* TODO: fix this logic mess */
 
-            if (!quit) {
-                move_disc(&towers[from], &towers[to]);
-                towers[from].selected = false;
-                finished = towers[N_TOWERS - 1].n_discs == n_discs;
+                if (!quit) {
+                    move_disc(&towers[from], &towers[to]);
+                    towers[from].selected = false;
+                    finished = towers[N_TOWERS - 1].n_discs == n_discs;
+                }
             }
         }
-    }
 
-    if (finished) {
-        restore_cursor_pos();
-        display_state(towers);
-        puts("fin X"); /* crap */
-        getchar();
+        if (finished) {
+            restore_cursor_pos();
+            display_state(towers);
+            puts("fin X"); /* crap */
+            getchar();
+        }
     }
 
     term_reset();
