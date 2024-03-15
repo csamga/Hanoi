@@ -11,7 +11,13 @@
 
 #define CSI "\x1b["
 
-static char *disc_str[11] = {
+struct tower {
+    short discs[MAX_DISCS];
+    short n_discs;
+    bool selected;
+};
+
+char *disc_str[11] = {
     "                   ",
     "         -         ",
     "        ---        ",
@@ -25,17 +31,16 @@ static char *disc_str[11] = {
     "-------------------"
 };
 
-static struct termios term_old;
-static short n_discs;
+struct termios term_old;
+short n_discs;
 
-struct tower {
-    short discs[MAX_DISCS];
-    short n_discs;
-    bool selected;
-};
+void save_cursor_pos(void) {
+    fputs(CSI "s", stdout);
+}
 
-void save_cursor_pos(void) { fputs(CSI "s", stdout); }
-void restore_cursor_pos(void) { fputs(CSI "u", stdout); }
+void restore_cursor_pos(void) {
+    fputs(CSI "u", stdout);
+}
 
 void term_setup(void) {
     struct termios new;
@@ -58,8 +63,8 @@ bool tower_push_disc(struct tower *tower, short disc) {
         (tower->n_discs == 0) ||
         ((tower->n_discs > 0) &&
          (tower->n_discs < n_discs) &&
-         (disc < tower->discs[tower->n_discs - 1])))
-    {
+         (disc < tower->discs[tower->n_discs - 1]))
+    ) {
         tower->discs[tower->n_discs] = disc;
         tower->n_discs++;
 
@@ -99,8 +104,8 @@ void display_state(struct tower *towers) {
             /* TODO: print appropriate number of spaces if no disc */
             if (
                 towers[t].selected &&
-                d == towers[t].n_discs - 1)
-            {
+                d == towers[t].n_discs - 1
+            ) {
                 printf(
                     CSI "7m" "%*.*s" CSI "0m" " ",
                     (1 + 2 * (n_discs - 1)),
@@ -143,7 +148,7 @@ int main(void) {
         n_discs = (short)valid * atoi(tmp);
 
         if (tmp_len > (short)(sizeof tmp - 2)) {
-            while ((c = getchar()) != '\n' && c != EOF) {}
+            while (((c = getchar()) != '\n') && (c != EOF)) {}
         }
     } while (n_discs < 3 || n_discs > MAX_DISCS);
 
